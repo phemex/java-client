@@ -4,6 +4,10 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class WebResultVo {
-    private List<OrderModelVo> rows;
+public class PagedResult<T> {
+
+    private long total;
+
+    private List<T> rows;
+
 }

@@ -1,9 +1,12 @@
 package com.phemex.client.httpops.httpurlconnection;
 
-import com.phemex.client.domain.PhemexApiConstant;
+import com.phemex.client.constant.PhemexApiConstant;
+import com.phemex.client.exceptions.PhemexException;
 import com.phemex.client.httpops.HttpOps;
 import com.phemex.client.httpops.HttpOpsBuilder;
 import com.phemex.client.impl.ClientUtils;
+import com.phemex.client.message.PhemexResponse;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +23,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+
 
 public class HttpUrlConnectionOpsBuilder implements HttpOpsBuilder {
 
@@ -41,13 +45,13 @@ public class HttpUrlConnectionOpsBuilder implements HttpOpsBuilder {
 
     @Override
     public HttpOps build() {
-        int connectTimeout = (int) this.connectionTimeout.toMillis() / 1000;
+        int connectTimeout = (int) this.connectionTimeout.toMillis();
 
         return new HttpOps() {
             @Override
-            public CompletableFuture<String> sendAsync(URI uri, String accessToken, byte[] secretKey,
-                                                       String method, String queryString, long expiry,
-                                                       String body, Duration timeout) {
+            public CompletableFuture<String> sendAsync(URI uri, String apiKey, byte[] apiSecret,
+                String method, String queryString, long expiry,
+                String body, Duration timeout) {
 
                 CompletableFuture<String> f = new CompletableFuture<>();
 
@@ -55,13 +59,14 @@ public class HttpUrlConnectionOpsBuilder implements HttpOpsBuilder {
                 URI withQueryUri;
                 try {
                     withQueryUri = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), queryString, uri.getFragment());
+//                    logger.debug("Opening http connection to url {}", withQueryUri);
                     conn = (HttpURLConnection) withQueryUri.toURL().openConnection();
                 } catch (IOException | URISyntaxException e) {
                     f.completeExceptionally(e);
                     return f;
                 }
                 conn.setConnectTimeout(connectTimeout);
-                conn.setReadTimeout(connectTimeout*10);
+                conn.setReadTimeout(connectTimeout * 10);
 
                 try {
                     conn.setRequestMethod(method);
@@ -69,14 +74,14 @@ public class HttpUrlConnectionOpsBuilder implements HttpOpsBuilder {
                     f.completeExceptionally(e);
                     return f;
                 }
+                long expry = expiry / 1_000L;
 
-                if (accessToken != null) {
-                    conn.setRequestProperty(PhemexApiConstant.PHEMEX_HEADER_REQUEST_EXPIRY, expiry + "");
-                    conn.setRequestProperty(PhemexApiConstant.PHEMEX_HEADER_REQUEST_ACCESS_TOKEN, accessToken);
+                if (apiKey != null) {
+                    conn.setRequestProperty(PhemexApiConstant.PHEMEX_HEADER_REQUEST_EXPIRY, expry + "");
+                    conn.setRequestProperty(PhemexApiConstant.PHEMEX_HEADER_REQUEST_ACCESS_TOKEN, apiKey);
                     conn.setRequestProperty(PhemexApiConstant.PHEMEX_HEADER_REQUEST_SIGNATURE,
-                            ClientUtils.sign(withQueryUri.getPath(), queryString, expiry, body, secretKey));
+                        ClientUtils.sign(withQueryUri.getPath(), queryString, expry, body, apiSecret));
                 }
-
 
                 if (body != null) {
                     conn.setRequestProperty("content-type", "application/json");
@@ -102,23 +107,33 @@ public class HttpUrlConnectionOpsBuilder implements HttpOpsBuilder {
                     return f;
                 }
                 if (respCode != 200) {
-                    f.completeExceptionally(new RuntimeException("non 200 response"));
+                    try {
+                        f.completeExceptionally(toPhemexException(IOUtils.toString(conn.getErrorStream(), StandardCharsets.UTF_8)));
+                    } catch (IOException e) {
+                        logger.warn("Got exception reading error output stream", e);
+                    }
                     return f;
                 }
+
                 try (InputStream is = conn.getInputStream()) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] b = new byte[128];
-                    int read;
-                    while ((read = is.read(b)) != -1) {
-                        baos.write(b, 0, read);
-                    }
-                    f.complete(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+                    f.complete(IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8));
                     return f;
                 } catch (IOException e) {
-                    f.completeExceptionally(e);
+                    f.completeExceptionally(new PhemexException("", -1, null, e));
                     return f;
                 }
             }
         };
+    }
+
+    private PhemexException toPhemexException(String str) {
+        logger.debug("Got exception str {}", str);
+        try {
+            PhemexResponse res = ClientUtils.objectMapper.readValue(str, PhemexResponse.class);
+            return new PhemexException(res.getMsg(), res.getCode(), null);
+        } catch (IOException ex) {
+            logger.warn("Failed to translate to phemex response", ex);
+        }
+        return new PhemexException(str, -1, null);
     }
 }

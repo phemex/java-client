@@ -1,25 +1,25 @@
 package com.phemex.client.impl;
 
 import com.phemex.client.PhemexClient;
+import com.phemex.client.PhemexClient.Builder;
 import com.phemex.client.httpops.ApiState;
 import com.phemex.client.httpops.HttpOps;
 import com.phemex.client.httpops.HttpOpsBuilder;
 import com.phemex.client.ws.PhemexMessageListener;
-import com.phemex.client.ws.PhemexWebSocketClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class PhemexClientBuilder implements PhemexClient.Builder {
-    String accessToken;
+
+    String apiKey;
     String url;
     String wsUri;
-    byte[] secretKey;
+    byte[] apiSecret;
     Clock clock = Clock.systemUTC();
     Duration connectionTimeout = Duration.ofSeconds(60);
     Duration expiryDuration = Duration.ofSeconds(10);
@@ -28,14 +28,14 @@ public class PhemexClientBuilder implements PhemexClient.Builder {
     Executor executor;
 
     @Override
-    public PhemexClient.Builder accessToken(String accessToken) {
-        this.accessToken = Objects.requireNonNull(accessToken);
+    public Builder apiKey(String apikey) {
+        this.apiKey = Objects.requireNonNull(apikey);
         return this;
     }
 
     @Override
-    public PhemexClient.Builder secretKey(String secretKey) {
-        this.secretKey = Base64.getUrlDecoder().decode(secretKey);
+    public Builder apiSecret(String apiSecret) {
+        this.apiSecret = Objects.requireNonNull(apiSecret).getBytes(StandardCharsets.UTF_8);
         return this;
     }
 
@@ -76,7 +76,6 @@ public class PhemexClientBuilder implements PhemexClient.Builder {
         return this;
     }
 
-
     @Override
     public PhemexClient.Builder connectionTimeout(Duration connectionTimeout) {
         this.connectionTimeout = Objects.requireNonNull(connectionTimeout);
@@ -85,12 +84,12 @@ public class PhemexClientBuilder implements PhemexClient.Builder {
 
     @Override
     public PhemexClient build() {
-        Objects.requireNonNull(this.accessToken);
+        Objects.requireNonNull(this.apiKey);
         Objects.requireNonNull(this.messageListener);
         Objects.requireNonNull(this.wsUri);
-        Objects.requireNonNull(this.secretKey);
+        Objects.requireNonNull(this.apiSecret);
 
-        String accessToken = this.accessToken;
+        String apiKey = this.apiKey;
         String url = Objects.requireNonNull(this.url);
         if (this.executor == null) {
             this.executor = Executors.newSingleThreadExecutor();
@@ -98,11 +97,11 @@ public class PhemexClientBuilder implements PhemexClient.Builder {
         Executor executor = this.executor;
 
         HttpOps httpOps = HttpOpsBuilder.newBuilder()
-                .connectionTimeout(connectionTimeout)
-                .executor(executor)
-                .build();
+            .connectionTimeout(connectionTimeout)
+            .executor(executor)
+            .build();
 
-        ApiState s = new ApiState(httpOps, url, accessToken, clock, expiryDuration.toMillis() / 1000L, this.secretKey);
+        ApiState s = new ApiState(httpOps, url, apiKey, clock, expiryDuration.toMillis(), this.apiSecret);
         OrderImpl orderClient = new OrderImpl(s);
         AccountImpl accountImpl = new AccountImpl(s);
 
@@ -118,18 +117,18 @@ public class PhemexClientBuilder implements PhemexClient.Builder {
             }
 
             @Override
-            public PhemexWebSocketClient createWebSocketClient() {
-                return new PhemexWebSocketClient(this,  wsUri, messageListener);
+            public PhemexWebSocketClientImpl createWebSocketClient() {
+                return new PhemexWebSocketClientImpl(this, wsUri, messageListener);
             }
 
             @Override
-            public String accessTokenSignature(long expiry) {
-                return ClientUtils.signAccessToken(accessToken, expiry, secretKey);
+            public String apiKeySignature(long expiry) {
+                return ClientUtils.signAccessToken(apiKey, expiry, apiSecret);
             }
 
             @Override
-            public String accessToken() {
-                return accessToken;
+            public String apiKey() {
+                return apiKey;
             }
 
         };

@@ -1,7 +1,9 @@
 package com.phemex.client.domain;
 
+import lombok.Data;
+
+@Data
 public class AccountVo {
-    private long accountId;
 
     private String currency;
 

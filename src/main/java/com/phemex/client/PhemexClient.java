@@ -1,34 +1,55 @@
 package com.phemex.client;
 
-import com.phemex.client.impl.OrderImpl;
 import com.phemex.client.impl.PhemexClientBuilder;
-import com.phemex.client.impl.AccountImpl;
+import com.phemex.client.rest.Account;
+import com.phemex.client.rest.Order;
 import com.phemex.client.ws.PhemexMessageListener;
 import com.phemex.client.ws.PhemexWebSocketClient;
-
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 
 public interface PhemexClient {
-    OrderImpl orders();
 
-    AccountImpl account();
+    Order orders();
+
+    Account account();
 
     PhemexWebSocketClient createWebSocketClient();
 
-    String accessTokenSignature(long expiry);
+    String apiKeySignature(long expiry);
 
-    String accessToken();
+    String apiKey();
+
+    @Deprecated
+    default String accessTokenSignature(long expiry) {
+        return apiKeySignature(expiry);
+    }
+
+    @Deprecated
+    default String accessToken() {
+        return apiKey();
+    }
 
     static Builder builder() {
         return new PhemexClientBuilder();
     }
 
     interface Builder {
-        Builder accessToken(String accessToken);
 
-        Builder secretKey(String secretKey);
+        @Deprecated
+        default Builder accessToken(String accessToken) {
+            return this.apiKey(accessToken);
+        }
+
+        @Deprecated
+        default Builder secretKey(String secretKey) {
+            return this.apiSecret(secretKey);
+        }
+
+        Builder apiKey(String apikey);
+
+        Builder apiSecret(String apiSecret);
 
         Builder url(String url);
 

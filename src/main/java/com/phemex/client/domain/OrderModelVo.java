@@ -1,86 +1,55 @@
 package com.phemex.client.domain;
 
+import com.phemex.client.constant.OrdStatus;
+import com.phemex.client.constant.OrdType;
+import com.phemex.client.constant.PriceDirection;
+import com.phemex.client.constant.Side;
+import com.phemex.client.constant.TimeInForce;
+import lombok.Data;
 
+@Data
 public class OrderModelVo {
+
+    private int bizError;
 
     private String orderID;
 
     private String clOrdID;
 
-    private long accountID;
-
     private String symbol;
 
-    private String side;
+    private Side side;
 
-    private String orderType;
+    private OrdType orderType;
 
     private long priceEp;
 
     private long orderQty;
 
+    private long displayQty;
 
-    public String getOrderID() {
-        return orderID;
-    }
+    private TimeInForce timeInForce;
 
-    public void setOrderID(String orderID) {
-        this.orderID = orderID;
-    }
+    private boolean reduceOnly;
 
-    public String getClOrdID() {
-        return clOrdID;
-    }
+    private long takeProfitEp;
 
-    public void setClOrdID(String clOrdID) {
-        this.clOrdID = clOrdID;
-    }
+    private long stopLossEp;
 
-    public long getAccountID() {
-        return accountID;
-    }
+    private long closedPnlEv;
 
-    public void setAccountID(long accountID) {
-        this.accountID = accountID;
-    }
+    private long closedSize;
 
-    public String getSymbol() {
-        return symbol;
-    }
+    private long cumQty;
 
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
+    private long cumValueEv;
 
-    public String getSide() {
-        return side;
-    }
+    private long leavesQty;
 
-    public void setSide(String side) {
-        this.side = side;
-    }
+    private long leavesValueEv;
 
-    public String getOrderType() {
-        return orderType;
-    }
+    private PriceDirection stopDirection;
 
-    public void setOrderType(String orderType) {
-        this.orderType = orderType;
-    }
+    private OrdStatus ordStatus;
 
-    public long getPriceEp() {
-        return priceEp;
-    }
-
-    public void setPriceEp(long priceEp) {
-        this.priceEp = priceEp;
-    }
-
-    public long getOrderQty() {
-        return orderQty;
-    }
-
-    public void setOrderQty(long orderQty) {
-        this.orderQty = orderQty;
-    }
 }
