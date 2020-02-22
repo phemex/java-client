@@ -1,8 +1,9 @@
 package com.phemex.client.domain;
 
-public class PositionVo {
+import lombok.Data;
 
-    private long accountID;
+@Data
+public class PositionVo {
 
     private String symbol;
 
@@ -16,20 +17,12 @@ public class PositionVo {
 
     private long leverageEr;
 
-    private double leverage;
-
     private long size;
-
-    private double value;
 
     private long valueEv;
 
     private long avgEntryPriceEp;
 
-    private double avgEntryPrice;
-
     private long posCostEv;
-
-    private double posCost;
 
 }

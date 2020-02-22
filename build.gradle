@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.10.1'
+    implementation 'commons-codec:commons-codec:1.10'
+    implementation 'org.apache.commons:commons-lang3:3.6'
+    implementation 'org.java-websocket:Java-WebSocket:1.4.0'
+    implementation 'commons-io:commons-io:2.6'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.2.3'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testImplementation 'junit:junit:4.12'
+    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+group = 'com.phemex.client'
+version = '1.0'
+sourceCompatibility = '1.8'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

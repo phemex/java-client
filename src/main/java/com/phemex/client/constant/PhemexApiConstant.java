@@ -1,4 +1,4 @@
-package com.phemex.client.domain;
+package com.phemex.client.constant;
 
 public final class PhemexApiConstant {
     public static final String PHEMEX_HEADER_REQUEST_ACCESS_TOKEN = "x-phemex-access-token";
