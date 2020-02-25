@@ -8,7 +8,7 @@ public interface PhemexWebSocketClient extends WebSocket {
 
     boolean connectBlocking(long timeout, TimeUnit timeUnit) throws InterruptedException;
 
-    void closeBlocking();
+    void closeBlocking() throws InterruptedException;
 
     void connect();
 
