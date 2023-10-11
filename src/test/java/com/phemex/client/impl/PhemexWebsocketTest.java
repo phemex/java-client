@@ -25,7 +25,7 @@ public class PhemexWebsocketTest {
 
     static private String testnetApiSecret = null;
 
-    String wsUri = "wss://testnet.phemex.com/ws/";
+    String wsUri = "wss://testnet-api.phemex.com/ws";
 
     @Before
     public void setup() throws Exception {
